@@ -9,6 +9,9 @@ $verbose=false;
 $audio=false;
 $bash=false;
 $divide_by=1;
+$store_fp=false;
+
+$fpext='fp';
 
 $md5arr=array();
 $sizes=array();
@@ -35,6 +38,7 @@ foreach ($argv as $k => $arg){
 			if ($arg=="-v" || $arg=="--verbose")	$verbose=true;
 			if ($arg=="-a" || $arg=="--audio")		$audio=true;
 			if ($arg=="-b" || $arg=="--bash")		$bash=true;
+			if ($arg=="-fp")						$store_fp=true;
 			if ($arg=="-d2")						$divide_by=2;
 			if ($arg=="-d3")						$divide_by=3;
 			if ($arg=="-d4")						$divide_by=4;
@@ -62,7 +66,7 @@ if (count($arr)==0){
 }
 $total=count($arr);
 
-if ($verbose) fwrite(STDERR, "(1 / 6)\tDefining functions.\n");
+if ($verbose) fwrite(STDERR, "Step: 1/6\tDefining functions.\n");
 
 function mglob($arg){
 	global $arr, $normal, $i, $verbose, $total;
@@ -92,21 +96,29 @@ echo "Usage: php ".$argv[0]." [options]... [directorys]...
     -t, --table\t\tShow results as table, otherwise the output is shown in groups.
     -n, --normal\tScan in normal recursivity, default is to scan first all files on current folder and then the files of direct subfolders and so on.
     -a, --audio\t\tUse Audio Fingerprint to compare audio files, needs fpcalc, mediainfo and file to be installed. Bee carefull with this option its much slower and can make mistakes.
-    -b, --bash\tWrite 'rm' before all but the first file in a group (you can write 'php ".$argv[0]." | bash')
+    -b, --bash\t\tWrite 'rm' before all but the first file in a group (you can write 'php ".$argv[0]." | bash')
     -v, --verbose\tBe more verbose. Output is sent to the stderr so you don't need to worry about pipes.
+    -fp\t\t\tAllows me to store fingerprints from files in other files with the same name but adding some extra extention.
 
     directory\t\tThe absolute or relative path to some directory without the last slash \"/\" default is \".\"  (current directory).
 ";
 die();
 }
 
-if ($verbose) fwrite(STDERR, "(2 / 6)\tStarting file scan.\n");
+//http://php.net/manual/en/function.filesize.php#106569
+function human_filesize($bytes, $decimals = 2) {
+	$sz = 'BKMGTP';
+	$factor = floor((strlen($bytes) - 1) / 3);
+	return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
+}
+
+if ($verbose) fwrite(STDERR, "\nStep: 2/6\tStarting file scan.\n");
 
 $run = true;
 
 while (isset($arr[$i]) && $run){
 	$item = $arr[$i];
-	if ($verbose) fwrite(STDERR, "(2 / 6) (".$i." / ".$total.") ".$item." ");
+	if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$item."");
 	if (filetype($item)=="file"){
 		$size = filesize($item);
 		$sizes[$size][] = $item;
@@ -117,13 +129,12 @@ while (isset($arr[$i]) && $run){
 				strpos($type,"audio")!==false ||
 				strpos($type,"Microsoft ASF")!==false ||
 				strpos($type,"MPEG v4 system")!==false){
-					//$duration = exec('mediainfo --Inform="General;%Duration%" '.str_replace("?","\\?",escapeshellarg($item)).'');	// General outputs always in ms, audio outputs in s if duration%1000==0
 					$duration = exec('mediainfo --Inform="General;%Duration%" '.escapeshellarg($item).'');	// General outputs always in ms, audio outputs in s if duration%1000==0
 					$duration = floor($duration/1000);	// ms to s
 					$duration = floor($duration/$divide_by);	// to match more files while comparing durations.
 					$duration = $duration * $divide_by;
 					$durations[$duration][] = $item;
-					if ($verbose) fwrite(STDERR, "Audio file, Duration: ".$duration." ");
+					if ($verbose) fwrite(STDERR, "\tAudio file ".$duration."s");
 			}
 		}
 	} else if (filetype($item)=="dir"){
@@ -138,7 +149,7 @@ while (isset($arr[$i]) && $run){
 	$i++;
 }
 
-if ($verbose) fwrite(STDERR, "(3 / 6)\tComparing sizes.\n");
+if ($verbose) fwrite(STDERR, "\n(3 / 6)\tComparing sizes.\n");
 
 //ksort($sizes);
 //$total=count($sizes);
@@ -155,7 +166,7 @@ foreach ($sizes as $size => $sizdups){
 			$i++;
 			$md5 = md5_file($file);
 			$md5arr[$md5][] = $file;
-			if ($verbose) fwrite(STDERR, "(3 / 6) ".round(($i/$total)*100)."% (".$i." / ".$total.") size: ".$size." md5: ".$md5." - ".$file."\n");
+			if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\tmd5: ".$md5." ".$file."\n");
 		}
 	} else {
 		$i++;
@@ -165,7 +176,7 @@ foreach ($sizes as $size => $sizdups){
 $run = true;
 
 if ($audio){
-	if ($verbose) fwrite(STDERR, "(4 / 6)\tComparing durations.\n");
+	if ($verbose) fwrite(STDERR, "\n(4 / 6)\tComparing durations.\n");
 	//$total=count($durations);
 	$total=count($durations,COUNT_RECURSIVE)-count($durations);
 	$i=0;
@@ -176,13 +187,21 @@ if ($audio){
 			foreach ($duration_dups as $file){
 				$i++;
 				unset($output);
-				exec('fpcalc -length '.$duration.' '.str_replace("?","\\?",escapeshellarg($file)),$output);
-				$output = implode(" ",$output);
-				$output = explode("=",$output);
-				$output = end($output);
-				$fprint_md5 = md5($output);
+				if (file_exists($file.'.'.$fpext)){
+					$output = file_get_contents($file.'.'.$fpext);
+					$fprint_md5=md5_file($file.'.'.$fpext);
+				} else {
+					exec('fpcalc -length '.$duration.' '.str_replace("?","\\?",escapeshellarg($file)),$output);
+					$output = implode(" ",$output);
+					$output = explode("=",$output);
+					$output = end($output);
+					$fprint_md5 = md5($output);
+					if ($store_fp){
+						file_put_contents($file.'.'.$fpext, $output);
+					}
+				}
 				$fprints[$fprint_md5][] = array($file,$output);
-				if ($verbose) fwrite(STDERR, "(4 / 6) ".round(($i/$total)*100)."% (".$i." / ".$total.") duration: ".$duration." fprint_md5: ".$fprint_md5." - ".$file."\n");
+				if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tfprint_md5: ".$fprint_md5." ".$file."\n");
 			}
 		} else {
 			$i++;
@@ -190,7 +209,7 @@ if ($audio){
 	}
 }
 
-if ($verbose) fwrite(STDERR, "(5 / 6)\tComparing md5.\n");
+if ($verbose) fwrite(STDERR, "\n(5 / 6)\tComparing md5.\n");
 
 //ksort($md5arr);
 $total=count($md5arr);
@@ -200,7 +219,7 @@ foreach ($md5arr as $md5 => $dups){
 	if (!$run) break;
 	$i++;
 	if (count($dups)>1){
-		if ($verbose) fwrite(STDERR, "(5 / 6) ".round(($i/$total)*100)."% (".$i." / ".$total.")\tFollowing files have same md5: ");
+		if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\tFollowing files have same md5: ");
 		if (!$table) {
 			if ($bash)	echo "#".$md5."\n";
 			else		echo $md5."\n";
@@ -227,7 +246,7 @@ foreach ($md5arr as $md5 => $dups){
 $run = true;
 
 if ($audio){
-	if ($verbose) fwrite(STDERR, "(6 / 6)\tComparing Audio fingerprints.\n");
+	if ($verbose) fwrite(STDERR, "\n(6 / 6)\tComparing Audio fingerprints.\n");
 	//ksort($fprints);
 	$total=count($fprints);
 	$i=0;
@@ -235,11 +254,11 @@ if ($audio){
 		if (!$run) break;
 		$i++;
 		if (count($fprint_dups)>1){
-			if ($verbose) fwrite(STDERR, "(6 / 6) ".round(($i/$total)*100)."% (".$i." / ".$total.")\tFollowing files have same fingerprint_md5: ");
+			if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\tFollowing files have same fingerprint_md5: ");
 			if (!$table) echo $fprint_md5."\n";
 			foreach ($fprint_dups as $dup){
-				if ($table) echo $fprint_md5." ".$dup[0]." ".substr($dup[1],0,30)."...".substr($dup[1],-30)."\n";
-				else echo "\t".$dup[0]." ".substr($dup[1],0,30)."...".substr($dup[1],-30)."\n";
+				if ($table)	echo $fprint_md5." ".$dup[0]."\t\t".substr($dup[1],0,20)."...".substr($dup[1],-20)."\n";
+				else		echo "\t".$dup[0]."\t\t".substr($dup[1],0,20)."...".substr($dup[1],-20)."\n";
 			}
 		}
 	}
