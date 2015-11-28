@@ -123,6 +123,11 @@ function shuffle_assoc(&$array) {
     $array = $new;
     return true;
 }
+function msubstr($str,$len){
+    if (strlen($str)<=$len)    return $str;
+    $len = floor(($len - 3)/2);
+    return substr($str,0,$len)."...".substr($str,-$len);
+}
 
 if ($verbose) fwrite(STDERR, "\nStep: 2/6\tStarting file scan.\n");
 
@@ -222,7 +227,7 @@ if ($audio){
                     if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tSkipping ".$file."\n");
                 }else {
                     $fprints[$fprint_md5][] = array($file,$output);
-                    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tfprint_md5: ".$fprint_md5." ".$file."\n");
+                    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tfprint_md5: ".msubstr($fprint_md5,16)." ".$file."\n");
                 }
             }
         } else {
@@ -249,9 +254,6 @@ foreach ($md5arr as $md5 => $dups){
         if ($bash){
             $j=0;
             foreach ($dups as $dup){
-                //$search = array("'",  '(',    ')',    ' ',    '&');
-                //$replace= array("\\'",    '\\(',  '\\)',  '\\ ',  '\\&');
-                //$dup = str_replace($search,$replace,$dup);
                 $dup=escapeshellarg($dup);
                 if ($j==0)  echo "# ".$dup."\n";
                 else        echo "rm ".$dup."\n";
@@ -280,8 +282,8 @@ if ($audio){
             if ($verbose) fwrite(STDERR, "\n".round(($i/$total)*100)."% ".$i."/".$total."\tFollowing files have same fingerprint_md5: ");
             if (!$table) echo $fprint_md5."\n";
             foreach ($fprint_dups as $dup){
-                if ($table) echo $fprint_md5." ".$dup[0]."\t".substr($dup[1],0,20)."...".substr($dup[1],-20)."\n";
-                else        echo "\t".$dup[0]."\t".substr($dup[1],0,20)."...".substr($dup[1],-20)."\n";
+                if ($table) echo $fprint_md5." ".$dup[0]."\t".msubstr($dup[1],43)."\n";
+                else        echo "\."$dup[0]."\t".msubstr($dup[1],43)."\n";
             }
         }
     }
