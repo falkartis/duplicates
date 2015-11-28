@@ -283,7 +283,7 @@ if ($audio){
             if (!$table) echo $fprint_md5."\n";
             foreach ($fprint_dups as $dup){
                 if ($table) echo $fprint_md5." ".$dup[0]."\t".msubstr($dup[1],43)."\n";
-                else        echo "\."$dup[0]."\t".msubstr($dup[1],43)."\n";
+                else        echo "\t".$dup[0]."\t".msubstr($dup[1],43)."\n";
             }
         }
     }
