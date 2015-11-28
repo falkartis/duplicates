@@ -187,7 +187,7 @@ foreach ($sizes as $size => $sizdups){
             $i++;
             $md5 = md5_file($file);
             $md5arr[$md5][] = $file;
-            if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\tmd5: ".$md5." ".$file."\n");
+            if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\tmd5: ".msubstr($md5,16)." ".$file."\n");
         }
     } else {
         $i++;
