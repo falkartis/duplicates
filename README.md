@@ -14,3 +14,5 @@ Future features:
  - Be able to save the work on a database.
 
  - Compare Pictures
+ 
+ - Compare files with diff tool if fingerprints match
