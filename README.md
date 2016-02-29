@@ -3,7 +3,7 @@ Duplicates PHP
 
 A script written in PHP that searches for duplicate files in a given folder.
 
-To use this I recomend first install php5, fpcalc and mediainfo.
+To use this first install php5, fpcalc and mediainfo.
 Then place the dups.php file in the ~/bin/ or /bin folder
 
 
