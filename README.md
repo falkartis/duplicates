@@ -16,3 +16,5 @@ Future features:
  - Compare Pictures
  
  - Compare files with diff tool if fingerprints match
+
+ - Automatic remove option
