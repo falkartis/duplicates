@@ -20,6 +20,7 @@ $fprints=array();
 
 $i=0;
 
+$files=0;
 
 declare(ticks = 10);
 $run = true;
@@ -135,8 +136,9 @@ $run = true;
 
 while (isset($arr[$i]) && $run){
     $item = $arr[$i];
-    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$item."");
+    if ($verbose) fwrite(STDERR, round(($files/$total)*100)."% ".$files."/".$total."\t".$item."");
     if (filetype($item)=="file"){
+        $files++;
         if (substr($item,-strlen($fpext))==$fpext){
             if ($verbose) fwrite(STDERR, " skipping fingerprint file ");
         } else {
