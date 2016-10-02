@@ -10,6 +10,7 @@ $audio=false;
 $bash=false;
 $divide_by=1;
 $store_fp=false;
+$random=false;
 
 $fpext='fp';
 
@@ -39,6 +40,7 @@ foreach ($argv as $k => $arg){
             if ($arg=="-v" || $arg=="--verbose")    $verbose=true;
             if ($arg=="-a" || $arg=="--audio")      $audio=true;
             if ($arg=="-b" || $arg=="--bash")       $bash=true;
+            if ($arg=="-r" || $arg=="--random")     $random=true;
             if ($arg=="-fp")                        $store_fp=true;
             if ($arg=="-d2")                        $divide_by=2;
             if ($arg=="-d3")                        $divide_by=3;
@@ -73,7 +75,9 @@ function mglob($arg){
     global $arr, $normal, $i, $verbose, $total;
     $j=$i;
     $tmp=glob($arg);
-    shuffle($tmp);
+    if ($random){
+        shuffle($tmp);
+    }
     foreach ($tmp as $tmpitem){
         if (substr($tmpitem,-3)!="/.." && substr($tmpitem,-2)!="/." && !in_array($tmpitem,$arr)){
             if ($normal && count($arr)>$j){
@@ -201,7 +205,9 @@ $run = true;
 if ($audio){
     if ($verbose) fwrite(STDERR, "\n(4 / 6)\tComparing durations.\n");
     //ksort($durations);
-    shuffle_assoc($durations);
+    if ($random){
+        shuffle_assoc($durations);
+    }
     //$total=count($durations);
     $total=count($durations,COUNT_RECURSIVE)-count($durations);
     $i=0;
