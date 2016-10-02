@@ -226,10 +226,10 @@ if ($audio){
     $i=0;
     foreach ($durations as $duration => $duration_dups){
         if (!$run) break;
-        //$i++;
+        $i++;
         if (count($duration_dups)>1){
             foreach ($duration_dups as $file){
-                $i++;
+                //$i++;
                 unset($output);
                 if (file_exists($file.'.'.$fpext)){
                     $output = file_get_contents($file.'.'.$fpext);
@@ -252,7 +252,7 @@ if ($audio){
                 }
             }
         } else {
-            $i++;
+            //$i++;
         }
     }
 }
