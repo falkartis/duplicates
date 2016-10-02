@@ -117,6 +117,14 @@ function human_filesize($bytes, $decimals = 2) {
     $factor = floor((strlen($bytes) - 1) / 3);
     return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
 }
+
+function human_time($time){
+    $s=$time%60;
+    $m=floor($time/60)%60;
+    $h=floor($time/3600);
+    return $h.":".$m.":".$s;
+}
+
 //http://php.net/manual/en/function.shuffle.php#94697
 //this is just for fun
 function shuffle_assoc(&$array) {
@@ -160,7 +168,7 @@ while (isset($arr[$i]) && $run){
                         $duration = floor($duration/$divide_by);    // to match more files while comparing durations.
                         $duration = $duration * $divide_by;
                         $durations[$duration][] = $item;
-                        if ($verbose) fwrite(STDERR, "\tAudio file ".$duration."s");
+                        if ($verbose) fwrite(STDERR, "\tAudio ".human_time($duration));
                 }
             }
         }
@@ -223,7 +231,7 @@ if ($audio){
     foreach ($durations as $duration => $duration_dups){
         if (!$run) break;
         $i++;
-        if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\n");
+        if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_time($duration)."\n");
         foreach ($duration_dups as $file){
             unset($output);
             if (file_exists($file.'.'.$fpext)){
