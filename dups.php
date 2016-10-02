@@ -72,7 +72,7 @@ $total=count($arr);
 if ($verbose) fwrite(STDERR, "Step: 1/6\tDefining functions.\n");
 
 function mglob($arg){
-    global $arr, $normal, $i, $verbose, $total;
+    global $arr, $normal, $i, $verbose, $total, $random;
     $j=$i;
     $tmp=glob($arg);
     if ($random){
