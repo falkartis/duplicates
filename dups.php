@@ -184,6 +184,10 @@ foreach ($sizes as $size => $files){
     }
 }
 
+if ($random){
+    shuffle_assoc($sizes);
+}
+
 $total=count($sizes);
 $i=0;
 
@@ -208,12 +212,17 @@ $run = true;
 
 if ($audio){
     if ($verbose) fwrite(STDERR, "\n(4 / 6)\tComparing durations.\n");
-    //ksort($durations);
+
+    foreach ($durations as $duration => $files){
+        if (count($files)==1){
+            unset($durations[$duration]);
+        }
+    }
+
     if ($random){
         shuffle_assoc($durations);
     }
-    //$total=count($durations);
-    $total=count($durations,COUNT_RECURSIVE)-count($durations);
+    $total=count($durations);
     $i=0;
     foreach ($durations as $duration => $duration_dups){
         if (!$run) break;
