@@ -178,25 +178,29 @@ while (isset($arr[$i]) && $run){
 
 if ($verbose) fwrite(STDERR, "\n(3 / 6)\tComparing sizes.\n");
 
-//ksort($sizes);
-//$total=count($sizes);
-$total=count($sizes,COUNT_RECURSIVE)-count($sizes);
+foreach ($sizes as $size => $files){
+    if (count($files)==1){
+        unset($sizes[$size]);
+    }
+}
+
+$total=count($sizes);
 $i=0;
 
 $run = true;
 
 foreach ($sizes as $size => $sizdups){
     if (!$run) break;
-    //$i++;
+    $i++;
     if (count($sizdups)>1){
         foreach ($sizdups as $file){
-            $i++;
+            //$i++;
             $md5 = md5_file($file);
             $md5arr[$md5][] = $file;
             if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\tmd5: ".msubstr($md5,16)." ".$file."\n");
         }
     } else {
-        $i++;
+        //$i++;
     }
 }
 
