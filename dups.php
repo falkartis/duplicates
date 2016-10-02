@@ -196,15 +196,11 @@ $run = true;
 foreach ($sizes as $size => $sizdups){
     if (!$run) break;
     $i++;
-    if (count($sizdups)>1){
-        foreach ($sizdups as $file){
-            //$i++;
-            $md5 = md5_file($file);
-            $md5arr[$md5][] = $file;
-            if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\tmd5: ".msubstr($md5,16)." ".$file."\n");
-        }
-    } else {
-        //$i++;
+    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".human_filesize($size)."\n");
+    foreach ($sizdups as $file){
+        $md5 = md5_file($file);
+        $md5arr[$md5][] = $file;
+        if ($verbose) fwrite(STDERR, "\tmd5: ".msubstr($md5,18)." ".$file."\n");
     }
 }
 
@@ -227,32 +223,28 @@ if ($audio){
     foreach ($durations as $duration => $duration_dups){
         if (!$run) break;
         $i++;
-        if (count($duration_dups)>1){
-            foreach ($duration_dups as $file){
-                //$i++;
-                unset($output);
-                if (file_exists($file.'.'.$fpext)){
-                    $output = file_get_contents($file.'.'.$fpext);
-                    $fprint_md5=md5_file($file.'.'.$fpext);
-                } else {
-                    exec('fpcalc -length '.$duration.' '.str_replace("?","\\?",escapeshellarg($file)),$output);
-                    $output = implode(" ",$output);
-                    $output = explode("=",$output);
-                    $output = end($output);
-                    $fprint_md5 = md5($output);
-                    if ($store_fp){
-                        file_put_contents($file.'.'.$fpext, $output);
-                    }
-                }
-                if (strlen($output)<=6){//invalid output: 'AQAAAA' or ''
-                    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tSkipping ".$file."\n");
-                }else {
-                    $fprints[$fprint_md5][] = array($file,$output);
-                    if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\tfprint_md5: ".msubstr($fprint_md5,16)." ".$file."\n");
+        if ($verbose) fwrite(STDERR, round(($i/$total)*100)."% ".$i."/".$total."\t".$duration."s\n");
+        foreach ($duration_dups as $file){
+            unset($output);
+            if (file_exists($file.'.'.$fpext)){
+                $output = file_get_contents($file.'.'.$fpext);
+                $fprint_md5=md5_file($file.'.'.$fpext);
+            } else {
+                exec('fpcalc -length '.$duration.' '.str_replace("?","\\?",escapeshellarg($file)),$output);
+                $output = implode(" ",$output);
+                $output = explode("=",$output);
+                $output = end($output);
+                $fprint_md5 = md5($output);
+                if ($store_fp){
+                    file_put_contents($file.'.'.$fpext, $output);
                 }
             }
-        } else {
-            //$i++;
+            if (strlen($output)<=6){//invalid output: 'AQAAAA' or ''
+                if ($verbose) fwrite(STDERR, "\tSkipping ".$file."\n");
+            }else {
+                $fprints[$fprint_md5][] = array($file,$output);
+                if ($verbose) fwrite(STDERR, "\tfprint_md5: ".msubstr($fprint_md5,18)." ".$file."\n");
+            }
         }
     }
 }
