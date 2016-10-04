@@ -128,6 +128,7 @@ function human_time($time){
 //http://php.net/manual/en/function.shuffle.php#94697
 //this is just for fun
 function shuffle_assoc(&$array) {
+    $new = array();
     $keys = array_keys($array);
     shuffle($keys);
     foreach($keys as $key) {
